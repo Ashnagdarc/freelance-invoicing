@@ -1,0 +1,36 @@
+import { Outlet } from 'react-router-dom'
+import { Box, Container, Flex, Stack, Text } from '@chakra-ui/react'
+import { SiteHeader } from './components/site-header'
+import { SITE } from '@/shared/utils/site-config'
+import { FooterLinks } from './components/footer-links'
+
+export function MainLayout() {
+  return (
+    <Flex direction="column" minH="100dvh">
+      <SiteHeader />
+
+      <Box as="main" flex="1">
+        <Container maxW="6xl" py={{ base: '8', md: '12' }}>
+          <Outlet />
+        </Container>
+      </Box>
+
+      <Box as="footer" borderTopWidth="1px" borderColor="border.muted">
+        <Container maxW="6xl">
+          <Stack
+            direction={{ base: 'column', sm: 'row' }}
+            justify="space-between"
+            align="center"
+            gap="4"
+            py="8"
+          >
+            <Text textStyle="sm" color="fg.muted">
+              &copy; {new Date().getFullYear()} {SITE.name}
+            </Text>
+            <FooterLinks />
+          </Stack>
+        </Container>
+      </Box>
+    </Flex>
+  )
+}

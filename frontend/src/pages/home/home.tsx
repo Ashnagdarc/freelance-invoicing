@@ -1,0 +1,14 @@
+import { Stack } from '@chakra-ui/react'
+import { Hero } from './components/hero'
+import { FeatureGrid } from './components/feature-grid'
+import { ExperiencePromo } from './components/experience-promo'
+
+export default function HomePage() {
+  return (
+    <Stack gap={{ base: '14', md: '20' }} pb="12">
+      <Hero />
+      <FeatureGrid />
+      <ExperiencePromo />
+    </Stack>
+  )
+}
