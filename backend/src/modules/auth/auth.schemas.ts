@@ -45,9 +45,11 @@ export const LoginSchema = z
 export const RegisterSchema = z
   .object({
     email: z.string().email('Enter a valid email address.'),
-    first_name: z.string().min(1, 'This field may not be blank.'),
+    first_name: z.string().default(''),
     last_name: z.string().default(''),
-    password,
+    password: z
+      .string()
+      .min(10, 'Your password must be at least 10 characters'),
     password_confirm: z.string(),
   })
   .refine((data) => data.password === data.password_confirm, {
