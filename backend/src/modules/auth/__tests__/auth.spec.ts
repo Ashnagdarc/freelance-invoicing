@@ -75,7 +75,7 @@ describe('POST /api/auth/login/', () => {
       .send({ email: 'user@example.com', password: 'wrong-password' })
 
     expect(response.status).toBe(400)
-    expect(response.body.non_field_errors).toEqual(['Invalid email or password.'])
+    expect(response.body.non_field_errors).toEqual(['Those details do not match an account'])
   })
 
   it('does not reveal whether an account exists', async () => {
@@ -84,7 +84,7 @@ describe('POST /api/auth/login/', () => {
       .send({ email: 'nobody@example.com', password: TEST_PASSWORD })
 
     expect(response.status).toBe(400)
-    expect(response.body.non_field_errors).toEqual(['Invalid email or password.'])
+    expect(response.body.non_field_errors).toEqual(['Those details do not match an account'])
   })
 
   it('rejects a disabled account', async () => {

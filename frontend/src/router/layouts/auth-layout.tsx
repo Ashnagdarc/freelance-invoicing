@@ -3,6 +3,7 @@ import { Box, Center, Container, Flex, HStack } from '@chakra-ui/react'
 import { BrandLogo } from '@/shared/components/brand-logo'
 import { ColorModeButton } from '@/shared/components/ui/color-mode-button'
 import { FooterLinks } from './components/footer-links'
+import { SignedInEmail } from './components/signed-in-email'
 
 /**
  * Minimal, centered auth shell: logo on top, a single narrow form column,
@@ -14,7 +15,10 @@ export function AuthLayoutWrapper() {
       <Container maxW="6xl">
         <HStack h="16" justify="space-between">
           <BrandLogo />
-          <ColorModeButton />
+          <HStack gap="2">
+            <SignedInEmail />
+            <ColorModeButton />
+          </HStack>
         </HStack>
       </Container>
 
