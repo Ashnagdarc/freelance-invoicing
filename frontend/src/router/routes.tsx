@@ -60,9 +60,7 @@ export const routes: RouteObject[] = [
         ),
         children: privateRoutes,
       },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
-
-  // Catch-all 404
-  { path: '*', element: <NotFoundPage /> },
 ]
