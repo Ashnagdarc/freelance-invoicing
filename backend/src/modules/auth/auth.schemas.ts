@@ -45,7 +45,7 @@ export const LoginSchema = z
 export const RegisterSchema = z
   .object({
     email: z.string().email('Enter a valid email address.'),
-    first_name: z.string().default(''),
+    first_name: z.string().min(1, 'This field may not be blank.'),
     last_name: z.string().default(''),
     password: z
       .string()

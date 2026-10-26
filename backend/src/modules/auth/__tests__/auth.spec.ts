@@ -39,6 +39,30 @@ describe('POST /api/auth/register/', () => {
     expect(response.body.password_confirm).toEqual(['Passwords do not match.'])
   })
 
+  it('rejects a password shorter than 10 characters', async () => {
+    const response = await api().post('/api/auth/register/').send({
+      email: 'short@example.com',
+      first_name: 'New',
+      password: '123456789',
+      password_confirm: '123456789',
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.body.password).toEqual(['Your password must be at least 10 characters'])
+  })
+
+  it('rejects a blank first name', async () => {
+    const response = await api().post('/api/auth/register/').send({
+      email: 'new@example.com',
+      first_name: '',
+      password: TEST_PASSWORD,
+      password_confirm: TEST_PASSWORD,
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.body.first_name).toEqual(['This field may not be blank.'])
+  })
+
   it('rejects an email that is already taken', async () => {
     await createUser({ email: 'taken@example.com' })
 
@@ -50,7 +74,28 @@ describe('POST /api/auth/register/', () => {
     })
 
     expect(response.status).toBe(400)
-    expect(response.body.email).toBeDefined()
+    expect(response.body.email).toEqual(['That email is already registered'])
+  })
+
+  it('uses the same message when the unique constraint rejects a raced insert', async () => {
+    await createUser({ email: 'taken@example.com' })
+    const originalFindUnique = prisma.user.findUnique
+    // Skip the pre-check so create hits the unique constraint, as a double submit would.
+    prisma.user.findUnique = (async () => null) as typeof originalFindUnique
+
+    try {
+      const response = await api().post('/api/auth/register/').send({
+        email: 'taken@example.com',
+        first_name: 'New',
+        password: TEST_PASSWORD,
+        password_confirm: TEST_PASSWORD,
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.body.email).toEqual(['That email is already registered'])
+    } finally {
+      prisma.user.findUnique = originalFindUnique
+    }
   })
 })
 
