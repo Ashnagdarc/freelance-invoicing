@@ -9,8 +9,8 @@
 
 import { z } from '../../config/zod.js'
 
-/** Mirrors Django's `AUTH_PASSWORD_VALIDATORS` minimum length. */
-const password = z.string().min(8, 'This password is too short. It must contain at least 8 characters.')
+/** Shared minimum for every password a user chooses. */
+const password = z.string().min(10, 'Your password must be at least 10 characters')
 
 export const UserSchema = z
   .object({
@@ -47,9 +47,7 @@ export const RegisterSchema = z
     email: z.string().email('Enter a valid email address.'),
     first_name: z.string().min(1, 'This field may not be blank.'),
     last_name: z.string().default(''),
-    password: z
-      .string()
-      .min(10, 'Your password must be at least 10 characters'),
+    password,
     password_confirm: z.string(),
   })
   .refine((data) => data.password === data.password_confirm, {

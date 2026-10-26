@@ -216,6 +216,18 @@ describe('POST /api/auth/change-password/', () => {
     expect(login.status).toBe(200)
   })
 
+  it('rejects a new password shorter than 10 characters', async () => {
+    const user = await createUser()
+
+    const response = await api()
+      .post('/api/auth/change-password/')
+      .set(...(await authHeader(user.id)))
+      .send({ old_password: TEST_PASSWORD, new_password: '123456789' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.new_password).toEqual(['Your password must be at least 10 characters'])
+  })
+
   it('rejects a wrong current password against that field', async () => {
     const user = await createUser()
 
