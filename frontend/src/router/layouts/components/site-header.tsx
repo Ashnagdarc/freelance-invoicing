@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Box, Button, Container, HStack } from '@chakra-ui/react'
+import { Box, Button, Container, HStack, Text } from '@chakra-ui/react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { Path } from '@/router/paths'
 import { BrandLogo } from '@/shared/components/brand-logo'
@@ -7,7 +7,7 @@ import { ColorModeButton } from '@/shared/components/ui/color-mode-button'
 import { UserMenu } from './user-menu'
 
 export function SiteHeader() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   return (
     <Box
@@ -27,7 +27,17 @@ export function SiteHeader() {
           <HStack gap="2">
             <ColorModeButton />
             {isAuthenticated ? (
-              <UserMenu />
+              <>
+                <Text
+                  textStyle="sm"
+                  maxW={{ base: '32', md: '64' }}
+                  truncate
+                  title={user?.email}
+                >
+                  {user?.email}
+                </Text>
+                <UserMenu />
+              </>
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm">
