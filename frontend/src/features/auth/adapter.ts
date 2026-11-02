@@ -9,7 +9,17 @@
 
 import type { ApiUser, AuthAdapter, AuthUser, AuthError, SocialProvider, TokenPair } from './types'
 import { AUTH_EXPIRED_EVENT, refreshAccessToken } from '@/api/client'
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/api/token-storage'
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  SESSION_EPOCH_KEY,
+  bumpSessionEpoch,
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  hasStoredSession,
+  setTokens,
+} from '@/api/token-storage'
 import { parseApiError } from '@/shared/utils/api-error'
 import { API_URL } from '@/shared/utils/api-url'
 
@@ -18,6 +28,7 @@ let currentUser: AuthUser | null = null
 let authListeners: Array<(user: AuthUser | null) => void> = []
 // False until the stored session has been checked, so guards don't redirect early
 let initialized = false
+let watchingOtherTabs = false
 
 function notifyListeners(user: AuthUser | null) {
   currentUser = user
@@ -93,6 +104,30 @@ async function restoreSession(): Promise<AuthUser | null> {
   }
 }
 
+/**
+ * Another tab on this computer shares localStorage. When it signs out, drop
+ * the session here too. A phone has its own storage, so it is unaffected.
+ */
+function watchOtherTabs() {
+  if (watchingOtherTabs) return
+  watchingOtherTabs = true
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === SESSION_EPOCH_KEY) {
+      clearTokens()
+      notifyListeners(null)
+      return
+    }
+    if (event.key !== null && event.key !== ACCESS_TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) {
+      return
+    }
+    if (!hasStoredSession()) {
+      bumpSessionEpoch()
+      notifyListeners(null)
+    }
+  })
+}
+
 export function createAuthAdapter(): AuthAdapter {
   restoreSession()
     .then(notifyListeners)
@@ -103,6 +138,7 @@ export function createAuthAdapter(): AuthAdapter {
 
   // The API client gave up renewing the session mid-use
   window.addEventListener(AUTH_EXPIRED_EVENT, () => notifyListeners(null))
+  watchOtherTabs()
 
   return {
     async signInWithEmail(email: string, password: string) {
@@ -187,17 +223,28 @@ export function createAuthAdapter(): AuthAdapter {
     },
 
     async signOut(): Promise<void> {
-      try {
-        // Lets the backend revoke the refresh token (Django blacklists it)
-        await apiFetch('/api/auth/logout/', {
-          method: 'POST',
-          body: JSON.stringify({ refresh: getRefreshToken() }),
-        })
-      } catch {
-        // Ignore errors on logout
-      }
+      const refresh = getRefreshToken()
+      const access = getAccessToken()
+
+      // Drop this browser first. A slow or failed request must not leave the
+      // session readable, and must not wait before the screen can change.
+      // Only this browser's refresh token is sent. Other devices keep theirs.
+      bumpSessionEpoch()
       clearTokens()
       notifyListeners(null)
+
+      if (!access && !refresh) return
+
+      void fetch(`${API_URL}/api/auth/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(access ? { Authorization: `Bearer ${access}` } : {}),
+        },
+        body: JSON.stringify(refresh ? { refresh } : {}),
+      }).catch(() => {
+        // This browser is already signed out.
+      })
     },
 
     getCurrentUser(): AuthUser | null {

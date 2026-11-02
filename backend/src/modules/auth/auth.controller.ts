@@ -45,8 +45,11 @@ export async function resetPassword(_req: Request, res: Response): Promise<void>
 }
 
 export async function logout(_req: Request, res: Response): Promise<void> {
-  // Tokens are stateless. Add a revocation list here if you need refresh
-  // tokens to stop working the moment a user signs out.
+  // Refresh tokens are stateless, so this does not revoke the one the browser
+  // just deleted. A copy that left the machine stays valid until it expires.
+  // Other devices keep their own tokens, which the product requires. The
+  // threat model is that the refresh token never leaves the browser that
+  // signed in.
   res.json({ detail: 'Successfully logged out.' })
 }
 

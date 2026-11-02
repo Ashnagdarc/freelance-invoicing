@@ -157,7 +157,8 @@ registry.registerPath({
   operationId: 'auth_logout_create',
   tags: TAGS,
   security: SECURED,
-  description: 'Log the current user out.',
+  description:
+    'Acknowledge sign-out. Refresh tokens are stateless and are not revoked; the browser deletes its own. A copied refresh token stays valid until it expires. Other devices keep their sessions.',
   request: { body: jsonContent(LogoutSchema) },
   responses: {
     200: { description: 'Logged out.', ...jsonContent(DetailSchema) },

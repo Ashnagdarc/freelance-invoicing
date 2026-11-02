@@ -12,7 +12,13 @@
 
 import { client } from './generated/client.gen'
 import { API_URL } from '@/shared/utils/api-url'
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './token-storage'
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  getSessionEpoch,
+  setTokens,
+} from './token-storage'
 
 /** Fired when the session can't be renewed; the auth adapter signs the user out. */
 export const AUTH_EXPIRED_EVENT = 'auth:expired'
@@ -50,6 +56,7 @@ client.interceptors.request.use((request) => {
 let refreshPromise: Promise<boolean> | null = null
 
 async function requestNewTokens(): Promise<boolean> {
+  const epoch = getSessionEpoch()
   const refresh = getRefreshToken()
   if (!refresh) return false
 
@@ -60,10 +67,19 @@ async function requestNewTokens(): Promise<boolean> {
       body: JSON.stringify({ refresh }),
     })
 
-    if (!response.ok) return false
+    // Sign-out in this tab or another is already in localStorage. Do not wait
+    // for the storage event: it runs too late to stop this write.
+    const stillThisSession =
+      getSessionEpoch() === epoch && getRefreshToken() === refresh
+    if (!stillThisSession || !response.ok) return false
 
     const data = await response.json()
+    if (getSessionEpoch() !== epoch || getRefreshToken() !== refresh) return false
     setTokens(data.access, data.refresh)
+    if (getSessionEpoch() !== epoch) {
+      clearTokens()
+      return false
+    }
     return true
   } catch {
     return false

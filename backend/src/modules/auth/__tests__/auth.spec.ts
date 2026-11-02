@@ -207,6 +207,37 @@ describe('POST /api/auth/refresh/', () => {
   })
 })
 
+describe('POST /api/auth/logout/', () => {
+  it('leaves a session on another device signed in', async () => {
+    const user = await createUser({ email: 'two-devices@example.com' })
+    const laptop = await api()
+      .post('/api/auth/login/')
+      .send({ email: user.email, password: TEST_PASSWORD })
+    const phone = await api()
+      .post('/api/auth/login/')
+      .send({ email: user.email, password: TEST_PASSWORD })
+
+    const logout = await api()
+      .post('/api/auth/logout/')
+      .set('Authorization', `Bearer ${laptop.body.access}`)
+      .send({ refresh: laptop.body.refresh })
+
+    expect(logout.status).toBe(200)
+
+    const phoneSession = await api()
+      .get('/api/auth/me/')
+      .set('Authorization', `Bearer ${phone.body.access}`)
+    expect(phoneSession.status).toBe(200)
+    expect(phoneSession.body.email).toBe(user.email)
+
+    const phoneRefresh = await api()
+      .post('/api/auth/refresh/')
+      .send({ refresh: phone.body.refresh })
+    expect(phoneRefresh.status).toBe(200)
+    expect(phoneRefresh.body.access).toEqual(expect.any(String))
+  })
+})
+
 describe('POST /api/auth/forgot-password/', () => {
   it('reports success for an unknown email, to avoid enumeration', async () => {
     const response = await api()

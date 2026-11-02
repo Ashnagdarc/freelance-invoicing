@@ -9,6 +9,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import { queryClient } from '@/api/query-client'
 import { createAuthAdapter } from '../adapter'
 import type { AuthUser, AuthError, AuthResult } from '../types'
 
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: Props) {
 
   useEffect(() => {
     const unsubscribe = adapter.onAuthStateChanged((u) => {
+      if (!u) queryClient.clear()
       setUser(u)
       setLoading(false)
     })

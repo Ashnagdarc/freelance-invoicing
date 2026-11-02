@@ -3,6 +3,7 @@ import { Box, Center, Container, Flex, HStack } from '@chakra-ui/react'
 import { BrandLogo } from '@/shared/components/brand-logo'
 import { ColorModeButton } from '@/shared/components/ui/color-mode-button'
 import { FooterLinks } from './components/footer-links'
+import { SignOutButton } from './components/sign-out-button'
 import { SignedInEmail } from './components/signed-in-email'
 
 /**
@@ -17,6 +18,7 @@ export function AuthLayoutWrapper() {
           <BrandLogo />
           <HStack gap="2">
             <SignedInEmail />
+            <SignOutButton />
             <ColorModeButton />
           </HStack>
         </HStack>
