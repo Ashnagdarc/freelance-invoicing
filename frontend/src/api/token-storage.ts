@@ -13,19 +13,23 @@
 
 export const ACCESS_TOKEN_KEY = 'auth.access'
 export const REFRESH_TOKEN_KEY = 'auth.refresh'
+/** Shared by every tab on this computer. An in-memory counter would miss a sign-out in another tab. */
+export const SESSION_EPOCH_KEY = 'auth.epoch'
 
 /**
  * Bumped when this browser signs out. A token refresh that started earlier
  * must not write a new pair after that, or the session would come back.
+ * Stored in localStorage so another tab sees the new value as soon as it
+ * reads, before its storage listener runs.
  */
-let sessionEpoch = 0
-
 export function getSessionEpoch(): number {
-  return sessionEpoch
+  const raw = localStorage.getItem(SESSION_EPOCH_KEY)
+  const epoch = raw === null ? 0 : Number(raw)
+  return Number.isFinite(epoch) ? epoch : 0
 }
 
 export function bumpSessionEpoch(): void {
-  sessionEpoch += 1
+  localStorage.setItem(SESSION_EPOCH_KEY, String(getSessionEpoch() + 1))
 }
 
 export function hasStoredSession(): boolean {

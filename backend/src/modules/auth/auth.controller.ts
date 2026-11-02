@@ -45,9 +45,11 @@ export async function resetPassword(_req: Request, res: Response): Promise<void>
 }
 
 export async function logout(_req: Request, res: Response): Promise<void> {
-  // This browser deletes its own tokens. Do not revoke every refresh token
-  // for the user: signing out of a shared computer must leave their phone,
-  // and any other device, signed in.
+  // Refresh tokens are stateless, so this does not revoke the one the browser
+  // just deleted. A copy that left the machine stays valid until it expires.
+  // Other devices keep their own tokens, which the product requires. The
+  // threat model is that the refresh token never leaves the browser that
+  // signed in.
   res.json({ detail: 'Successfully logged out.' })
 }
 

@@ -67,12 +67,15 @@ async function requestNewTokens(): Promise<boolean> {
       body: JSON.stringify({ refresh }),
     })
 
-    if (getSessionEpoch() !== epoch || !response.ok) return false
+    // Sign-out in this tab or another is already in localStorage. Do not wait
+    // for the storage event: it runs too late to stop this write.
+    const stillThisSession =
+      getSessionEpoch() === epoch && getRefreshToken() === refresh
+    if (!stillThisSession || !response.ok) return false
 
     const data = await response.json()
-    if (getSessionEpoch() !== epoch) return false
+    if (getSessionEpoch() !== epoch || getRefreshToken() !== refresh) return false
     setTokens(data.access, data.refresh)
-    // Sign-out can land between the check above and this write.
     if (getSessionEpoch() !== epoch) {
       clearTokens()
       return false

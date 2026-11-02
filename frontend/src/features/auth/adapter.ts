@@ -12,6 +12,7 @@ import { AUTH_EXPIRED_EVENT, refreshAccessToken } from '@/api/client'
 import {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
+  SESSION_EPOCH_KEY,
   bumpSessionEpoch,
   clearTokens,
   getAccessToken,
@@ -112,6 +113,11 @@ function watchOtherTabs() {
   watchingOtherTabs = true
 
   window.addEventListener('storage', (event) => {
+    if (event.key === SESSION_EPOCH_KEY) {
+      clearTokens()
+      notifyListeners(null)
+      return
+    }
     if (event.key !== null && event.key !== ACCESS_TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) {
       return
     }

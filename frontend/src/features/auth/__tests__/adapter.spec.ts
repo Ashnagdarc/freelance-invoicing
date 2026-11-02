@@ -1,4 +1,11 @@
-import { ACCESS_TOKEN_KEY, getAccessToken, getRefreshToken, setTokens } from '@/api/token-storage'
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  SESSION_EPOCH_KEY,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from '@/api/token-storage'
 
 const me = { id: 1, email: 'ada@example.com', first_name: 'Ada', last_name: '' }
 
@@ -179,5 +186,57 @@ describe('auth adapter session restore', () => {
     expect(getAccessToken()).toBeNull()
     expect(getRefreshToken()).toBeNull()
     expect(adapter.getCurrentUser()).toBeNull()
+  })
+
+  it('does not write tokens when another tab signed out before the refresh lands', async () => {
+    setTokens('expired', 'refresh-1')
+    let releaseRefresh: (response: Response) => void = () => {}
+    const refreshGate = new Promise<Response>((resolve) => {
+      releaseRefresh = resolve
+    })
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const path = new URL(String(input)).pathname
+      if (path === '/api/auth/refresh/') return refreshGate
+      throw new Error(`Unexpected request to ${path}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    vi.resetModules()
+    const { refreshAccessToken } = await import('@/api/client')
+    const pending = refreshAccessToken()
+
+    await vi.waitFor(() => {
+      expect(fetchMock.mock.calls.length).toBeGreaterThan(0)
+    })
+
+    // The other tab has already cleared the session. Its storage event has
+    // not been delivered to this tab yet.
+    localStorage.setItem(SESSION_EPOCH_KEY, '1')
+    localStorage.removeItem(ACCESS_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+
+    releaseRefresh(jsonResponse(200, { access: 'new-access', refresh: 'new-refresh' }))
+    await expect(pending).resolves.toBe(false)
+
+    expect(getAccessToken()).toBeNull()
+    expect(getRefreshToken()).toBeNull()
+  })
+
+  it('drops a restored session when another tab bumps the sign-out epoch', async () => {
+    setTokens('access-1', 'refresh-1')
+    mockFetch({ '/api/auth/me/': [jsonResponse(200, me)] })
+
+    vi.resetModules()
+    const { createAuthAdapter } = await import('../adapter')
+    const adapter = createAuthAdapter()
+    await new Promise((resolve) => adapter.onAuthStateChanged((user) => resolve(user)))
+
+    localStorage.setItem(SESSION_EPOCH_KEY, '1')
+    window.dispatchEvent(new StorageEvent('storage', { key: SESSION_EPOCH_KEY }))
+
+    expect(adapter.getCurrentUser()).toBeNull()
+    expect(getAccessToken()).toBeNull()
+    expect(getRefreshToken()).toBeNull()
   })
 })
