@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { Button } from '@chakra-ui/react'
 import { useAuth } from '@/features/auth/hooks/use-auth'
+import { isSigningOut } from '@/features/auth/session-guard'
 import { Path } from '@/router/paths'
 import { LoadingSpinner } from '@/shared/components/loading-spinner'
 import { StatusPage } from '@/shared/components/status-page'
@@ -19,6 +20,10 @@ export function AuthGuard({ roles, children }: AuthGuardProps) {
   }
 
   if (!isAuthenticated) {
+    // Sign-out is already navigating away. Redirecting here would replace the
+    // public front page with the sign-in form.
+    if (isSigningOut()) return null
+
     const redirectParam = encodeURIComponent(location.pathname + location.search)
     return <Navigate to={`${Path.Login}?redirect=${redirectParam}`} replace />
   }

@@ -157,7 +157,8 @@ registry.registerPath({
   operationId: 'auth_logout_create',
   tags: TAGS,
   security: SECURED,
-  description: 'Log the current user out.',
+  description:
+    'Sign out the client that called this. Other devices keep their own sessions.',
   request: { body: jsonContent(LogoutSchema) },
   responses: {
     200: { description: 'Logged out.', ...jsonContent(DetailSchema) },

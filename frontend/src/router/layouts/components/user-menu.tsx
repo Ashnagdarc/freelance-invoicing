@@ -1,18 +1,12 @@
-import { useNavigate } from 'react-router-dom'
 import { Avatar, Box, Menu, Portal, Text } from '@chakra-ui/react'
 import { LogOut, Settings, User } from 'lucide-react'
+import { useSignOut } from '@/features/auth/hooks/use-sign-out'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 import { displayName } from '@/features/auth/utils/display-name'
-import { Path } from '@/router/paths'
 
 export function UserMenu() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate(Path.Login)
-  }
+  const { user } = useAuth()
+  const signOut = useSignOut()
 
   return (
     <Menu.Root positioning={{ placement: 'bottom-end' }}>
@@ -42,9 +36,9 @@ export function UserMenu() {
               Settings
             </Menu.Item>
             <Menu.Separator />
-            <Menu.Item value="logout" onClick={handleLogout}>
+            <Menu.Item value="logout" onClick={() => void signOut()}>
               <LogOut size={16} />
-              Sign Out
+              Sign out
             </Menu.Item>
           </Menu.Content>
         </Menu.Positioner>

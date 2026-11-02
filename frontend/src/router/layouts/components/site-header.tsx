@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth/hooks/use-auth'
 import { Path } from '@/router/paths'
 import { BrandLogo } from '@/shared/components/brand-logo'
 import { ColorModeButton } from '@/shared/components/ui/color-mode-button'
+import { SignOutButton } from './sign-out-button'
 import { SignedInEmail } from './signed-in-email'
 import { UserMenu } from './user-menu'
 
@@ -30,6 +31,7 @@ export function SiteHeader() {
             {isAuthenticated ? (
               <>
                 <SignedInEmail />
+                <SignOutButton />
                 <UserMenu />
               </>
             ) : (
